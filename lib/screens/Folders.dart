@@ -1026,9 +1026,8 @@ class _FoldersState extends State<Folders> {
 
       int gridColumns = lucasState.getGridColumns();
 
-      List<MObject> objects =
-          await MRelation.getObjectsInFolder(gridColumns, mfolder.id);
-      await lucasState.saveObject(StateProperties.gridObjects, objects);
+      List<MObject> objects = await MRelation.getObjectsInFolder(gridColumns, mfolder.id);
+       await lucasState.saveObject(StateProperties.gridObjects, objects);
 
       currentFolder = await MFolder.getByID(mfolder.id);
       currentFolder.isVisible = mObject.isVisible;
