@@ -131,6 +131,7 @@ class HelperWebService {
         traslationsTemporal =
             traslations.getRange(i, traslations.length - 1).toList();
       }
+
       await sendTraslations(traslationsTemporal, isDelete);
     }
 
@@ -351,8 +352,12 @@ class HelperWebService {
         mImage.useAsset = 0;
       }
     }
+try{
+  await MImage.createWithID(mImage);
+}catch(e){
+      print(e);
+}
 
-    await MImage.createWithID(mImage);
 
     // add translation
 
@@ -394,7 +399,7 @@ class HelperWebService {
     } catch (e) {
       // HelperToast.showToast("error folde id ${nFolder.id} " );
       print(e.toString());
-      return;
+
     }
 
     // Add relation
