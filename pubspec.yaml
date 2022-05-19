@@ -58,6 +58,8 @@ dependencies:
   firebase_storage: ^10.2.10
   #path: ^1.8.0
   fluttertoast: ^8.0.9
+  flutter_swiper:
+  wakelock:
 
 dev_dependencies:
   flutter_test:
