@@ -41,7 +41,7 @@ class MRelation {
       6; // inicated that the layout applies when using this number of columns
   String user =
       ''; // Indicates to what user the folder,image, video or sound belongs to
-
+  static bool first = true;
   static List<MRelation> inMemoryTable;
   static Map<int, MRelation> inMemoryDictionary;
 
@@ -892,10 +892,10 @@ class MRelation {
     // var table = await db.rawQuery("SELECT MAX(id)+1 as id FROM $TableName");
     // int maxId = await table.first["id"] ?? 1;
     int i = UniqueKey().hashCode;
-    if(i<30000){
+    if (i < 30000) {
       Random random = new Random();
-      int randomNumber = random.nextInt(9999)+30000;
-      i+=randomNumber;
+      int randomNumber = random.nextInt(9999) + 30000;
+      i += randomNumber;
     }
 
     // return maxId;
@@ -907,20 +907,16 @@ class MRelation {
     List<MObject> objectsInFolder =
         await getObjectsInFolder(gridColumns, parentFolderId);
 
-    // If visible index 1000 found, renumber visible index
-    bool needToRefresh = await fixVisibleIndex1000(gridColumns, parentFolderId);
-    if (needToRefresh) {
-      objectsInFolder = await getObjectsInFolder(gridColumns, parentFolderId);
-      return objectsInFolder;
-    }
+    await fixConsecutiveVisibleIndex(gridColumns, parentFolderId);
 
-    // If visible renumber consecutivly
-    needToRefresh =
-        await fixConsecutiveVisibleIndex(gridColumns, parentFolderId);
-    if (needToRefresh) {
-      objectsInFolder = await getObjectsInFolder(gridColumns, parentFolderId);
-      return objectsInFolder;
-    }
+    // Logger().e(objectsInFolder[15].visibleIndex);
+
+    // If visible index 1000 found, renumber visible index
+    //bool needToRefresh = await fixVisibleIndex1000(gridColumns, parentFolderId);
+    //if (needToRefresh) {
+    //objectsInFolder = await getObjectsInFolder(gridColumns, parentFolderId);
+    //return objectsInFolder;
+    //}
 
     if (mDraggedObject.visibleIndex == mDraggedToObject.visibleIndex)
       return objectsInFolder;
@@ -928,24 +924,17 @@ class MRelation {
     try {
       var temp = mDraggedObject.visibleIndex;
       var to = mDraggedToObject.visibleIndex;
-      //Logger().e('Temp: $temp');
-      //Logger().e('To: $to');
 
-      await MRelation.updateVisibleIndexById(
-          objectsInFolder[to - 1].visibleIndex,
-          objectsInFolder[temp - 1].relationId,
-          parentFolderId,
-          gridColumns);
-      await MRelation.updateVisibleIndexById(
-          objectsInFolder[temp - 1].visibleIndex,
-          objectsInFolder[to - 1].relationId,
-          parentFolderId,
-          gridColumns);
-    } catch (err) {
-      //int a = 0;
-    }
+      await MRelation.updateVisibleIndexById(objectsInFolder[to].visibleIndex,
+          objectsInFolder[temp].relationId, parentFolderId, gridColumns);
+      await MRelation.updateVisibleIndexById(objectsInFolder[temp].visibleIndex,
+          objectsInFolder[to].relationId, parentFolderId, gridColumns);
+    } catch (err) {}
+
+    // If visible renumber consecutively
+    await fixConsecutiveVisibleIndex(gridColumns, parentFolderId);
+
     clearMemoryTables();
-
     objectsInFolder = await getObjectsInFolder(gridColumns, parentFolderId);
     return objectsInFolder;
   }
@@ -985,24 +974,22 @@ class MRelation {
 
     bool mustFixNumbering = false;
     for (int i = 0; i < objectsInFolder.length; i++) {
-      if (objectsInFolder[i].visibleIndex != i + 1) {
+      if (objectsInFolder[i].visibleIndex != i) {
         mustFixNumbering = true;
         break;
       }
     }
     if (mustFixNumbering) {
       for (int i = 0; i < objectsInFolder.length; i++) {
-        objectsInFolder[i].visibleIndex = i + 1;
+        objectsInFolder[i].visibleIndex = i;
       }
       for (int i = 0; i < objectsInFolder.length; i++) {
         await MRelation.updateVisibleIndexById(objectsInFolder[i].visibleIndex,
             objectsInFolder[i].relationId, parentFolderId, gridColumns);
       }
       clearMemoryTables();
-
       return true;
     }
-
     return false;
   }
 

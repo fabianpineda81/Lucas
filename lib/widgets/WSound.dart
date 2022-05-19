@@ -172,6 +172,13 @@ class _WSoundState extends State<WSound> {
     if (mSound != null && mSound.fileName == null) isMSoundEmpty = true;
 
     return Container(
+      decoration: opacity != 1.0 ? BoxDecoration(
+        image: DecorationImage(
+          alignment: Alignment(200, 200),
+          image: AssetImage('assets/App/blocked.png'),
+          fit: BoxFit.cover,
+        ),
+      ) : BoxDecoration(),
       foregroundDecoration: BoxDecoration(
         color: overlayColor,
         backgroundBlendMode: BlendMode.saturation,
@@ -285,7 +292,7 @@ class _WSoundState extends State<WSound> {
       return Colors.transparent;
     } else {
       if (isEditMode)
-        return Colors.grey;
+        return Colors.transparent;
       else
         return Colors.transparent;
     }

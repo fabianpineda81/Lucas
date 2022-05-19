@@ -8,6 +8,7 @@ import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
 import 'package:flutter_sound/flutter_sound.dart';
 import 'package:flutter_tts/flutter_tts.dart';
+import 'package:logger/logger.dart';
 import 'package:lucas/helpers/Helper.dart';
 import 'package:lucas/helpers/LocalPreferences.dart';
 import 'package:lucas/helpers/PushMessageType.dart';
@@ -54,6 +55,7 @@ class _VoiceBoxState extends State<VoiceBox> {
   int objectIndexToPlay = -1;
   int quizBoxIndexToPlay = -1;
   String currentLevel;
+  bool pressed = true;
 
   //final FirebaseMessaging _firebaseMessaging = FirebaseMessaging();
   String _localUserEmail = '';
@@ -91,14 +93,14 @@ class _VoiceBoxState extends State<VoiceBox> {
     // flutterSound.setDbLevelEnabled(true);
 
     FirebaseMessaging.onMessage.listen((RemoteMessage message) async {
-        await processOnMessage(message.data);
-      });
+      await processOnMessage(message.data);
+    });
     FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) async {
       await processOnLaunch(message.data);
     });
 
     //await _firebaseMessaging.requestPermission(sound: true, badge: true, alert: true);
-    
+
     // _firebaseMessaging.getToken().then((String token) {
     //   assert(token != null);
     //   if (mounted) {
@@ -111,8 +113,9 @@ class _VoiceBoxState extends State<VoiceBox> {
   }
 
   Future<void> initialize() async {
-    await FirebaseMessaging.instance.requestPermission(sound: true, badge: true, alert: true);
-    
+    await FirebaseMessaging.instance
+        .requestPermission(sound: true, badge: true, alert: true);
+
     canCreateQuiz = await LocalPreferences.getInt('canCreateQuiz', 0);
     isQuizMode = await LocalPreferences.getBool("isQuizMode", false);
 
@@ -340,7 +343,8 @@ class _VoiceBoxState extends State<VoiceBox> {
       SnackBar(
         backgroundColor: color,
         content: Text(message),
-      ),);
+      ),
+    );
     // scaffold.showSnackBar(
     //   SnackBar(
     //     backgroundColor: color,
@@ -492,13 +496,16 @@ class _VoiceBoxState extends State<VoiceBox> {
 
     Widget voiceB = GestureDetector(
       onTap: () async {
-        if (isQuizMode) {
-          await LocalPreferences.setBool("isQuizMode", false);
-          await sendQuizResults();
-        }
 
-        await playImageCards();
+          if (isQuizMode) {
+            await LocalPreferences.setBool("isQuizMode", false);
+            await sendQuizResults();
+          }
+
+          await playImageCards();
+
       },
+      onDoubleTap: () {},
       child: Container(
         decoration: BoxDecoration(color: Colors.grey[400]),
         height: canCreateQuiz == 0
@@ -688,7 +695,7 @@ class _VoiceBoxState extends State<VoiceBox> {
 
   Future<void> sendQuizResults() async {
     await FirebaseMessaging.instance.requestPermission(
-          sound: true, badge: true, alert: true, provisional: false);
+        sound: true, badge: true, alert: true, provisional: false);
 
     List<Map<String, dynamic>> objects = <Map<String, dynamic>>[];
     for (int j = 0; j < imageCards.length; j++) {
@@ -783,7 +790,8 @@ class _VoiceBoxState extends State<VoiceBox> {
     }
 
     return Container(
-      color: highlighted ? Colors.yellowAccent : null,
+      color: highlighted ? Colors.green[200] : null,
+      width: 2 * Helper.tileHeight(context),
       child: Column(
         children: <Widget>[
           (useAsset == 0 && localImage == null)
@@ -859,51 +867,56 @@ class _VoiceBoxState extends State<VoiceBox> {
 
   playImageCards() async {
     // initialize tts
-    FlutterTts flutterTts = await initializeTTS();
-    if (flutterTts == null) {
-      showDialog(
-        context: context,
-        builder: (BuildContext context) {
-          // return object of type Dialog
-          return AlertDialog(
-            title: L.getText('no valid voice found'),
-            content: SingleChildScrollView(
-              child: L.getText('no voice selected'),
-            ),
-            actions: <Widget>[
-              // usually buttons at the bottom of the dialog
-              new TextButton(
-                child: L.getUpperText('settings title'),
-                onPressed: () {
-                  Navigator.of(context).pop();
-
-                  // open TextToSpeech settings
-                  Route route =
-                      MaterialPageRoute(builder: (context) => TextToSpeech());
-                  Navigator.push(context, route);
-                },
+    if(pressed) {
+      pressed = false;
+      FlutterTts flutterTts = await initializeTTS();
+      if (flutterTts == null) {
+        showDialog(
+          context: context,
+          builder: (BuildContext context) {
+            // return object of type Dialog
+            return AlertDialog(
+              title: L.getText('no valid voice found'),
+              content: SingleChildScrollView(
+                child: L.getText('no voice selected'),
               ),
-            ],
-          );
-        },
-      );
-      return;
-    }
+              actions: <Widget>[
+                // usually buttons at the bottom of the dialog
+                new TextButton(
+                  child: L.getUpperText('settings title'),
+                  onPressed: () {
+                    Navigator.of(context).pop();
 
-    FlutterSoundPlayer flutterSoundPlayer = await initializeAudioPlayer();
+                    // open TextToSpeech settings
+                    Route route =
+                    MaterialPageRoute(builder: (context) => TextToSpeech());
+                    Navigator.push(context, route);
+                  },
+                ),
+              ],
+            );
+          },
+        );
 
-    flutterTts.setCompletionHandler(() {
-      print("Complete $objectIndexToPlay");
+        pressed = true;
+
+        return;
+      }
+
+      FlutterSoundPlayer flutterSoundPlayer = await initializeAudioPlayer();
+
+      flutterTts.setErrorHandler((msg) {
+        return;
+      });
+
+      objectIndexToPlay = -1;
+
+      flutterTts.setCompletionHandler(() {
+        playNextObject(flutterTts, flutterSoundPlayer);
+      });
+
       playNextObject(flutterTts, flutterSoundPlayer);
-    });
-
-    flutterTts.setErrorHandler((msg) {
-      print("error");
-      return;
-    });
-
-    objectIndexToPlay = -1;
-    await playNextObject(flutterTts, flutterSoundPlayer);
+    }
   }
 
   playQuizCards() async {
@@ -942,7 +955,7 @@ class _VoiceBoxState extends State<VoiceBox> {
     FlutterSoundPlayer flutterSoundPlayer = await initializeAudioPlayer();
 
     flutterTts.setCompletionHandler(() {
-      print("Complete $objectIndexToPlay");
+      //print("Complete $objectIndexToPlay");
       playQuizBoxNextObject(flutterTts, flutterSoundPlayer);
     });
 
@@ -1023,6 +1036,7 @@ class _VoiceBoxState extends State<VoiceBox> {
       }
       return;
     }
+
     if (objectIndexToPlay < 0) {
       await sendObjects();
 
@@ -1043,8 +1057,8 @@ class _VoiceBoxState extends State<VoiceBox> {
     // highlight object as they are played
     imageCards[objectIndexToPlay].highlighted = true;
     setState(() {});
-
     MObject mObject = imageCards[objectIndexToPlay];
+
     if (objectIsImage) {
       MImage mImage = mObject;
       await flutterTts.speak(mImage.textToSay);
@@ -1085,6 +1099,10 @@ class _VoiceBoxState extends State<VoiceBox> {
                 : _controller.play();
           } */
     }
+
+    if(objectIndexToPlay == imageCards.length - 1){
+      pressed = true;
+    }
   }
 
   playQuizBoxNextObject(
@@ -1117,6 +1135,7 @@ class _VoiceBoxState extends State<VoiceBox> {
     setState(() {});
 
     MObject mObject = quizCards[quizBoxIndexToPlay];
+
     if (objectIsImage) {
       MImage mImage = mObject;
       await flutterTts.speak(mImage.textToSay);
@@ -1163,7 +1182,7 @@ class _VoiceBoxState extends State<VoiceBox> {
     if (imageCards.isEmpty) return;
 
     await FirebaseMessaging.instance.requestPermission(
-          sound: true, badge: true, alert: true, provisional: false);
+        sound: true, badge: true, alert: true, provisional: false);
 
     List<Map<String, dynamic>> objects = <Map<String, dynamic>>[];
     for (int j = 0; j < imageCards.length; j++) {

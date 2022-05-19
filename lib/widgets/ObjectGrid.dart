@@ -67,7 +67,8 @@ class ObjectGrid extends StatefulWidget {
 
 class _ObjectGridState extends State<ObjectGrid> {
   bool isLoading = false;
-  int gridColumns = 4;
+  //int gridColumns = 4;
+  int gridColumns = 6; //cambie las grid
   int parentFolderId;
   String currentLevel;
   final ValueChanged<MObject> onItemTap; // callback for updating folder
@@ -79,6 +80,7 @@ class _ObjectGridState extends State<ObjectGrid> {
 
   int maxPageIndex = 0;
   bool dragModeOn = true;
+
 
   _ObjectGridState(this.currentLevel, this.onItemTap, this.onItemDoubleTap,
       this.onItemLongPress, this.onRefreshParentWidget);
@@ -191,23 +193,25 @@ class _ObjectGridState extends State<ObjectGrid> {
       columnIndex++;
     }
 
-    return SingleChildScrollView(
+    /*return SingleChildScrollView(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.start,
         crossAxisAlignment: CrossAxisAlignment.center,
         children: rows,
       ),
-    );
+    );*/
 
-    /* return GridView(
-      gridDelegate: new SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: gridColumns,
-      ),
-      //scrollDirection: Axis.horizontal,
-      children: [
-        for (final item in gridObjects) buildListTile(item, isEditMode),
-      ],
-    ); */
+    return GridView(
+          scrollDirection: Axis.vertical,
+          gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
+              maxCrossAxisExtent: MediaQuery.of(context).size.width / 6,
+              childAspectRatio: 1,
+              crossAxisSpacing: 0,
+              mainAxisSpacing: 2),
+          children: [
+            for (final item in gridObjects) buildListTile(item, isEditMode),
+          ],
+        );
   }
 
   Widget buildListTile(MObject mObject, bool isEditMode) {
@@ -255,7 +259,7 @@ class _ObjectGridState extends State<ObjectGrid> {
     //return widget;
     return Draggable(
       data: mObject,
-      affinity: Axis.vertical,
+      affinity: null,
       maxSimultaneousDrags: 1,
       child: dragTargetObject,
       feedback: Container(
@@ -717,7 +721,6 @@ class _DragTargetObjectState extends State<DragTargetObject> {
     final lucasState =
         PropertyChangeProvider.of<LucasState>(context, listen: true).value;
     lucasState.saveObject(StateProperties.refreshVoiceBox, 1);
-    //lucasState.notifyAll();
 
     if (onItemTap != null) {
       onItemTap(mObject);
@@ -732,9 +735,6 @@ class _DragTargetObjectState extends State<DragTargetObject> {
 
     MFolder currentFolder = lucasState.getObject(StateProperties.currentFolder);
 
-    //Logger().d(mDraggedObject.textToShow);//el que muevo
-    //Logger().d(mDraggedToObject.textToShow);// el que se reeemplaza
-
     List<MObject> objectsInFolder = await MRelation.moveItem(
         mDraggedObject, mDraggedToObject, gridColumns, currentFolder.id);
 
@@ -745,16 +745,8 @@ class _DragTargetObjectState extends State<DragTargetObject> {
     await lucasState.saveObject(
         StateProperties.learningObjects, learningObjects);
 
-    // lucasState.notifyAll();
-
-    // setState(() {
-    //   lucasState.setGridColumns(gridColumns);
-    // });
-
     if (onRefreshParentWidget != null) {
       onRefreshParentWidget(null);
     }
-
-    //lucasState.saveObject(StateProperties.refreshVoiceBox, 1);
   }
 }

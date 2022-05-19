@@ -23,7 +23,7 @@ import 'package:lucas/widgets/WOnboard.dart';
 //import 'package:property_change_notifier/property_change_notifier.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:developer';
-
+import 'package:flutter_swiper/flutter_swiper.dart';
 
 class Choice {
   const Choice({this.title, this.icon});
@@ -62,7 +62,7 @@ class _FoldersState extends State<Folders> {
 
   //List<MObject> gridObjects;
   bool isLoading = false;
-  int currentFolderId = -1;
+  //int currentFolderId = -1;
   //final String hint = "";
   List<MFolder> folders;
   //bool darkMode = true;
@@ -89,7 +89,7 @@ class _FoldersState extends State<Folders> {
   Map<String, String> helpScreenTranslations = Map<String, String>();
   bool canShowHelpScreens = false;
   bool isLargeScreen = false;
-  bool canDrag = false;
+  bool canDrag = null;
 
   final _scaffoldKey = GlobalKey<ScaffoldState>();
   Map<String, String> translations = Map<String, String>();
@@ -135,10 +135,6 @@ class _FoldersState extends State<Folders> {
     setState(() {
       translations = result;
     });
-
-    if (currentFolder == null) {
-      currentFolder = await MFolder.getByID(-1);
-    }
   }
 
   Future<void> loadHelpScreensTranslationTexts() async {
@@ -217,7 +213,10 @@ class _FoldersState extends State<Folders> {
       StateProperties.currentFolder,
       StateProperties.showHelperFolders,
       StateProperties.gridObjects,
+      StateProperties.canDrag
     ]).value;
+
+    canDrag = lucasState.getObject(StateProperties.canDrag) ?? false;
 
     // return PropertyChangeConsumer<LucasState>(
     //     properties: [
@@ -247,9 +246,11 @@ class _FoldersState extends State<Folders> {
       return showHelperScreens();
     }
 
-    currentFolder = lucasState.getObject(StateProperties.currentFolder);
-    if (currentFolder != null && currentFolder.id == -1)
-      currentFolder.isVisible = 1;
+      //lucasState.saveObject(StateProperties.currentFolder, currentFolder);}
+
+    //currentFolder = lucasState.getObject(StateProperties.currentFolder);
+   // if (currentFolder != null && currentFolder.id == -1)
+      //currentFolder.isVisible = 1;
 
     // if (currentFolder==null) {
     //   currentFolder = MFolder.getByID(-1);
@@ -395,6 +396,36 @@ class _FoldersState extends State<Folders> {
             // )
           ],
         ),
+        /*body: ConstrainedBox(
+            child: new Swiper(
+              itemBuilder: (c, ind) {
+                return new Wrap(
+                  runSpacing: 10,
+                  children: [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,25,27,28,29,30,31,32].map((i){
+                    return new SizedBox(
+                      width: MediaQuery.of(context).size.width/6,
+                      child: new Column(
+
+                        children: <Widget>[
+                          new SizedBox(
+                            child:  new Container(
+                              child: grid,
+                            ),
+                            height: MediaQuery.of(context).size.width * 0.16,
+
+                          ),
+                          //new Padding(padding: new EdgeInsets.only(top:10),child: new Text("$ind"),)
+                        ],
+                      ),
+                    );
+                  }).toList(),
+                );
+              },
+              pagination: new SwiperPagination(),
+              itemCount: 10,
+            ),
+            constraints:new BoxConstraints.loose(new Size(MediaQuery.of(context).size.width, MediaQuery.of(context).size.height))
+        ),*/
         body: WillPopScope(
           onWillPop: handleBackButton,
           child: Column(
@@ -403,14 +434,14 @@ class _FoldersState extends State<Folders> {
             children: <Widget>[
               isLoading
                   ? Container(
-                      height: Helper.LinearProgressIndicatorHeight,
-                      child: LinearProgressIndicator(
-                        value: null,
-                        valueColor: new AlwaysStoppedAnimation<Color>(
-                            Theme.of(context).primaryColor),
-                        backgroundColor: Colors.white,
-                      ),
-                    )
+                height: Helper.LinearProgressIndicatorHeight,
+                child: LinearProgressIndicator(
+                  value: null,
+                  valueColor: new AlwaysStoppedAnimation<Color>(
+                      Theme.of(context).primaryColor),
+                  backgroundColor: Colors.white,
+                ),
+              )
                   : Container(),
               //generalInstructions(),
               //gridSizeSelector(),
@@ -433,6 +464,7 @@ class _FoldersState extends State<Folders> {
     );
     //});
   }
+
 
   Widget btnHelp() {
     final lucasState =
@@ -529,6 +561,10 @@ class _FoldersState extends State<Folders> {
         bool canDragNew = canDrag;
         canDragNew = !canDragNew;
 
+        setState(() {
+          canDrag = canDragNew;
+        });
+
         if (canDragNew) {
           await reorderVisibleIndex();
           showMessageInSnackbar(translations['Drag and drop enabled']);
@@ -541,7 +577,7 @@ class _FoldersState extends State<Folders> {
 
         final lucasState =
             PropertyChangeProvider.of<LucasState>(context, listen: false).value;
-        await lucasState.saveObject(StateProperties.canDrag, canDrag);
+        await lucasState.saveObject(StateProperties.canDrag, canDragNew);
       },
     );
   }
@@ -728,7 +764,7 @@ class _FoldersState extends State<Folders> {
     if (currentLevel != '5') return Container(width: 0.0, height: 0.0);
 
     Icon icon =
-        Icon(Icons.check_circle_outline, color: Theme.of(context).primaryColor);
+        Icon(Icons.check_circle_outline, color: Colors.white);
     String strButton = _strSelectDefaultFolder.toUpperCase();
 
     return Container(
@@ -752,7 +788,7 @@ class _FoldersState extends State<Folders> {
             Text(
               strButton,
               style: TextStyle(
-                color: Theme.of(context).primaryColor,
+                color: Colors.white,
               ),
             ),
           ],
@@ -1022,12 +1058,12 @@ class _FoldersState extends State<Folders> {
       final lucasState =
           PropertyChangeProvider.of<LucasState>(context, listen: false).value;
       await lucasState.saveObject(StateProperties.selectedFolder, mfolder);
-      await lucasState.saveObject(StateProperties.currentFolderId, mfolder.id);
 
       int gridColumns = lucasState.getGridColumns();
 
-      List<MObject> objects = await MRelation.getObjectsInFolder(gridColumns, mfolder.id);
-       await lucasState.saveObject(StateProperties.gridObjects, objects);
+      List<MObject> objects =
+          await MRelation.getObjectsInFolder(gridColumns, mfolder.id);
+      await lucasState.saveObject(StateProperties.gridObjects, objects);
 
       currentFolder = await MFolder.getByID(mfolder.id);
       currentFolder.isVisible = mObject.isVisible;
@@ -1040,12 +1076,12 @@ class _FoldersState extends State<Folders> {
       lucasState.saveObject(StateProperties.currentFolder, currentFolder);
       lucasState.saveObject(StateProperties.parentFolder, parentFolder);
 
-      // setState(() {
-      //   currentFolderId = mfolder.id;
-      // });
+      setState(() {
+        currentFolder = currentFolder;
+      });
 
       if (int.parse(currentLevel) > 5) {
-        lucasState.saveObject(StateProperties.currentFolderId, mfolder.id);
+        //lucasState.saveObject(StateProperties.currentFolderId, mfolder.id);
         await LocalPreferences.setInt('currentLearningFolderId', mfolder.id);
 
         lucasState.saveObject(StateProperties.currentFolder, mfolder);
@@ -1741,25 +1777,25 @@ class _FoldersState extends State<Folders> {
     int visibleIndex = 0;
     for (MRelation relation in relations) {
       relation.visibleIndex = visibleIndex;
-      await MRelation.update(relation);
+      //await MRelation.update(relation);
       visibleIndex++;
     }
 
     List<MObject> objects =
         await MRelation.getObjectsInFolder(gridColumns, currentFolder.id);
 
-     visibleIndex = 0;
-     for (MObject mObject in objects) {
-       MRelation mRelation = await MRelation.getByID(mObject.relationId);
-       mRelation.visibleIndex = visibleIndex;
-       await MRelation.update(mRelation);
-       visibleIndex++;
-     }
+    visibleIndex = 0;
+    for (MObject mObject in objects) {
+      MRelation mRelation = await MRelation.getByID(mObject.relationId);
+      mRelation.visibleIndex = visibleIndex;
+      //await MRelation.update(mRelation);
+      visibleIndex++;
+    }
 
     //objects = await MRelation.getObjectsInFolder(gridColumns, currentFolder.id);
-    for (MFolder f in objects) {
-      var element = f.textToShow;
-    }
+    //for (MFolder f in objects) {
+    //var element = f.textToShow;
+    //}
     await lucasState.saveObject(StateProperties.gridObjects, objects);
   }
 }

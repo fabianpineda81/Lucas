@@ -390,27 +390,30 @@ class _StoriesState extends State<Stories> {
       textToShow = mImage.textToShow;
     }
 
+    Logger().i(image);
+
     return GestureDetector(
       onTap: () async {
-        for (MStoryObject story in storyObjects) {
-          MObject mObject = story.mObject;
-          if (story.mObject is MImage) {
-            MImage mImage = mObject;
-            press(mImage.textToShow);
-            await playObject(story);
-          }else{
-            await playObject(story);
+        if(pressed == '') {
+          for (MStoryObject story in storyObjects) {
+            MObject mObject = story.mObject;
+            if (story.mObject is MImage) {
+              MImage mImage = mObject;
+              press(mImage.textToShow);
+              await playObject(story);
+            } else {
+              await playObject(story);
+            }
+            await Future.delayed(const Duration(milliseconds: 1600));
           }
-          await Future.delayed(const Duration(milliseconds: 1600));
-
-          //sleep(const Duration(milliseconds: 2000));
         }
         press('');
       },
+      onDoubleTap: () {  },
       child: Container(
         padding: EdgeInsets.only(bottom: 5.0),
         height: 150.0,
-        color: pressed.contains(textToShow) ? Colors.yellow[100] : Colors.transparent,
+        color: pressed.contains(textToShow) ? Colors.green[200] : Colors.transparent,
         child: Column(
           // mainAxisAlignment: MainAxisAlignment.center,
           // crossAxisAlignment: CrossAxisAlignment.center,

@@ -84,7 +84,7 @@ class _WFolderState extends State<WFolder> {
       // onLongPressUp: () => onDoubleTap(context, mFolder, currentLevel),
       child: Container(
         height: Helper.tileHeight(context),
-        width: Helper.tileHeight(context),
+
         decoration: BoxDecoration(
           image: DecorationImage(
               alignment: Alignment(200, 200),
@@ -328,7 +328,6 @@ class _WFolderState extends State<WFolder> {
     if (mFolder.isVisible == 1 && isEditMode) {
       return 1.0;
     }
-
     return 1.0;
   }
 
@@ -385,7 +384,6 @@ class _WFolderState extends State<WFolder> {
 
   onFolderDoubleTap(
       BuildContext context, MFolder mFolder, String currentLevel) async {
-    //await sayFolder();
 
     if (_onItemTap != null) {
       _onItemDoubleTap(mFolder);

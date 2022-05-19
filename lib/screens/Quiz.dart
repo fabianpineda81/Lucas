@@ -453,7 +453,7 @@ class _QuizState extends State<Quiz> {
     }
 
     return Container(
-      color: highlighted ? Colors.yellowAccent : null,
+      color: highlighted ? Colors.green : null,
       child: Column(
         children: <Widget>[
           (useAsset == 0 && localImage == null)

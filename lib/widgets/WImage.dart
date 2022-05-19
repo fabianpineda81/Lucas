@@ -128,7 +128,6 @@ class _WImageState extends State<WImage> {
     double opacity = getOpacity(isEditMode);
     Widget cardImage = getCardImage(overlayColor, opacity, isEditMode);
 
-    //Logger().e(ignoreVisibility);
     return GestureDetector(
       onTap: () => onTap(mImage, currentLevel),
       onDoubleTap: () => onTap(mImage, currentLevel),
@@ -136,24 +135,16 @@ class _WImageState extends State<WImage> {
       child: Container(
         height: ignoreVisibility && this.currentLevel == "1"
             ? MediaQuery.of(context).size.height / 2
-            : (ignoreVisibility && this.currentLevel == "2") ||
-                    (ignoreVisibility && this.currentLevel == "3")
+            : (ignoreVisibility && this.currentLevel != "1")
                 ? null
                 : Helper.tileHeight(context),
-        width: ignoreVisibility &&
-                (this.currentLevel == "1" ||
-                    this.currentLevel == "2" ||
-                    this.currentLevel == "3")
-            ? null
-            : Helper.tileHeight(context),
+        width: ignoreVisibility ? null : Helper.tileHeight(context),
         alignment: Alignment.center,
         decoration: BoxDecoration(
             color: getImageBackgroundColor(isEditMode),
             border: Border.all(
-                color: pressed ? Colors.yellow[100] : Colors.white,
-                width: pressed ? 2.0 : 2.0)),
-        //padding: EdgeInsets.all(4.0),
-        //decoration: myOuterBoxDecoration(isEditMode),
+                color: pressed && int.parse(this.currentLevel) < 4 ? Colors.green : Colors.white,
+                width: pressed ? 3.0 : 3.0)),
         child: Container(
           decoration: myInnerBoxDecoration(isEditMode),
           child: Container(
@@ -181,9 +172,18 @@ class _WImageState extends State<WImage> {
     }
 
     return Container(
+      decoration: opacity != 1.0
+          ? BoxDecoration(
+              image: DecorationImage(
+                alignment: Alignment(200, 200),
+                image: AssetImage('assets/App/blocked.png'),
+                fit: BoxFit.cover,
+              ),
+            )
+          : BoxDecoration(),
       foregroundDecoration: BoxDecoration(
         color: overlayColor,
-        backgroundBlendMode: BlendMode.saturation,
+        //backgroundBlendMode: BlendMode.saturation,
       ),
       child: Opacity(
         opacity: opacity,
@@ -215,10 +215,7 @@ class _WImageState extends State<WImage> {
                                         mImage.fileName,
                                       ) !=
                                       null
-                                  ? Image.asset(
-                                      mImage.fileName,
-                                      //height: 50.0,
-                                    )
+                                  ? getImage(mImage.fileName)
                                   : Image.asset(Helper.imageNotFound)
                               : localImage == null
                                   ? Container()
@@ -276,6 +273,15 @@ class _WImageState extends State<WImage> {
     );
   }
 
+  getImage(path) {
+    return Image.asset(
+      path,
+      errorBuilder: (context, error, stackTrace) {
+        return Image.asset(Helper.imageNotFound);
+      },
+    );
+  }
+
   double getOpacity(bool isEditMode) {
     if (mImage.isVisible == 1 || ignoreVisibility) {
       return 1.0;
@@ -292,7 +298,7 @@ class _WImageState extends State<WImage> {
       return Colors.transparent;
     } else {
       if (isEditMode)
-        return Colors.grey;
+        return Colors.transparent;
       else
         return Colors.transparent;
     }
@@ -349,8 +355,6 @@ class _WImageState extends State<WImage> {
           await flutterTts.setSpeechRate(ttsSpeed);
           await flutterTts.speak(imageCard.textToSay);
           await Future.delayed(const Duration(milliseconds: 1200));
-          //sleep(const Duration(milliseconds: 1000));
-          //Resaltar
           setState(() {
             pressed = false;
           });

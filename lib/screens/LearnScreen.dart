@@ -1940,6 +1940,7 @@ class _LearnScreenState extends State<LearnScreen> {
         null,
         key: UniqueKey(),
       );
+      //fileName = mObject.fileName;
     }
     if (mObject is MImage) {
       MImage mImage = mObject;
@@ -1998,26 +1999,41 @@ class _LearnScreenState extends State<LearnScreen> {
         return AlertDialog(
           insetPadding: EdgeInsets.all(0),
           //title: new Text(mObject.textToShow),
+          backgroundColor: Color(_getColorFromHex(mObject.backgroundColor ?? 'ffffff')),
           content: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.center,
             children: <Widget>[
+              //SizedBox(
+              //height: MediaQuery.of(context).size.height / 2,
+              //child: Card(
+              //child: Column(
+              //mainAxisAlignment: MainAxisAlignment.center,
+              //crossAxisAlignment: CrossAxisAlignment.center,
+              //children: <Widget>[
+              SizedBox(
+                height: MediaQuery.of(context).size.height / 4,
+              ),
               Expanded(
-                child: Card(
-                  child: Column(
-                    children: <Widget>[
-                      Expanded(
-                        child: objectWidget,
-                        // Image.asset(
-                        //   fileName ?? '',
-                        //   // height: MediaQuery.of(context).size.height / 2,
-                        //   // width: MediaQuery.of(context).size.width / 2,
-                        // ),
-                      ),
-                    ],
-                  ),
+                child: //objectWidget,
+                    Image.asset(
+                  mObject.fileName ?? '',
+                  width: MediaQuery.of(context).size.width * 3,
+                  height: MediaQuery.of(context).size.height,
                 ),
               ),
+              Expanded(
+                child: Text(
+                  mObject.textToShow ?? '',
+                  //_strNotAssigned,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(color: Colors.black),
+                ),
+              )
+              //],
+              //),
+              //),
+              //),
             ],
           ),
           actions: <Widget>[
@@ -2033,4 +2049,13 @@ class _LearnScreenState extends State<LearnScreen> {
       },
     );
   }
+
+  _getColorFromHex(String hexColor) {
+    hexColor = hexColor.toUpperCase().replaceAll("#", "");
+    if (hexColor.length == 6) {
+      hexColor = "FF" + hexColor;
+    }
+    return int.parse(hexColor, radix: 16);
+  }
+
 }

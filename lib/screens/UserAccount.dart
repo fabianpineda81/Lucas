@@ -27,6 +27,7 @@ import 'package:lucas/module_backup_reestore/helper_backup.dart';
 import 'package:lucas/module_backup_reestore/helper_web_service.dart';
 import 'package:lucas/screens/BottomNavigationOptions.dart';
 //import 'package:property_change_notifier/property_change_notifier.dart';
+import 'package:wakelock/wakelock.dart';
 
 class UserAccount extends StatefulWidget {
   UserAccount({Key key}) : super(key: key);
@@ -327,6 +328,8 @@ class _UserAccountState extends State<UserAccount> {
     });
 
     super.initState();
+
+    Wakelock.enable();
   }
 
   Future<void> initialize() async {
@@ -1035,7 +1038,6 @@ class _UserAccountState extends State<UserAccount> {
                       try{
                         await  HelperBackUp.reestore(userEmailNameToRestore, selectedFolderToRestore, selectedLocalFolder,actualizarEstado);
                       }catch(e){
-                        print(e);
                         setState(() {
                           status= "Error in reestore";
                         });

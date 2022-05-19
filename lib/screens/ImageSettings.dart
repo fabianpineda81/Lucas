@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:logger/logger.dart';
 import 'package:lucas/helpers/Helper.dart';
 import 'package:lucas/helpers/LocalPreferences.dart';
 import 'package:lucas/helpers/StateProperties.dart';
@@ -176,23 +177,33 @@ class _ImageSettingsState extends State<ImageSettings> {
   Future<void> getObjects(
   String textToSearch, bool first) async {
 
-    // hide softkeyboard
-    if(!first) {
-      FocusScope.of(context).requestFocus(FocusNode());
-    }
-
-    setState(() {
-      isLoading = true;
-    });
-
-    List<MObject> allObjects = await MObject.getAll(textToSearch);
-
-    if (mounted) {
+    if (mounted && !first) {
+      setState(() {
+        isLoading = true;
+      });
+      List<MObject> allObjects = await MObject.getAll(textToSearch);
       setState(() {
         objects = allObjects;
         isLoading = false;
       });
     }
+
+    if(first && objects.length == 0){
+      setState(() {
+        isLoading = true;
+      });
+      List<MObject> allObjects = await MObject.getAll(textToSearch);
+      setState(() {
+        objects = allObjects;
+        isLoading = false;
+      });
+    }
+
+   // hide softkeyboard
+   if(!first) {
+     FocusScope.of(context).requestFocus(FocusNode());
+   }
+
   }
 
   Widget showHelperScreens() {
@@ -555,15 +566,12 @@ class _ImageSettingsState extends State<ImageSettings> {
     if (isLoading) return Container();
 
     return GridView(
-      scrollDirection: Axis.horizontal,
-      //gridDelegate: new SliverGridDelegateWithFixedCrossAxisCount(
+      scrollDirection: Axis.vertical,
       gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
-          //crossAxisCount: crossAxisCount
-          maxCrossAxisExtent: 110,
-          childAspectRatio: 1 / 1,
-          //crossAxisSpacing: 20,
-          //mainAxisSpacing: 20
-      ),
+          maxCrossAxisExtent: MediaQuery.of(context).size.width / 6,
+          childAspectRatio: 1,
+          crossAxisSpacing: 0,
+          mainAxisSpacing: 2),
       children: [
         for (final item in objects) buildListTile(item),
       ],

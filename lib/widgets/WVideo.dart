@@ -121,7 +121,7 @@ class _WVideoState extends State<WVideo> {
         width: Helper.tileHeight(context),
         //constraints: BoxConstraints.expand(),
         margin: const EdgeInsets.all(1.0),
-        decoration: myOuterBoxDecoration(isEditMode), //
+        decoration: myOuterBoxDecoration(isEditMode),
         child: Container(
           decoration: myInnerBoxDecoration(isEditMode), //
           child: Container(
@@ -143,6 +143,13 @@ class _WVideoState extends State<WVideo> {
     if (mVideo != null && mVideo.fileName == null) isMVideoEmpty = true;
 
     return Container(
+      decoration: opacity != 1.0 ? BoxDecoration(
+        image: DecorationImage(
+          alignment: Alignment(200, 200),
+          image: AssetImage('assets/App/blocked.png'),
+          fit: BoxFit.cover,
+        ),
+      ) : BoxDecoration(),
       foregroundDecoration: BoxDecoration(
         color: overlayColor,
         backgroundBlendMode: BlendMode.saturation,
@@ -258,7 +265,7 @@ class _WVideoState extends State<WVideo> {
       return Colors.transparent;
     } else {
       if (isEditMode)
-        return Colors.grey;
+        return Colors.transparent;
       else
         return Colors.transparent;
     }
