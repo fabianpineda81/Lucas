@@ -125,4 +125,49 @@ class HelperBR {
 
     return MFolders;
   }
+  static Future<void> DeleteChildrens(MObject mObject) async {
+    String typeOfConcept = await Helper.deleteAnObject(mObject);
+
+
+    MRelation relation = await MRelation.getByID(mObject.relationId);
+
+    List<MRelation> relations = await MRelation.getAllRelationsOfItemId(typeOfConcept, mObject.id);
+    for (int i = 0; i < relations.length; i++) {
+      await MRelation.delete(relations[i]);
+    }
+    /*
+    final lucasState = PropertyChangeProvider.of<LucasState>(
+        context,
+        listen: false)
+        .value;
+
+    // update environment
+    if (relations.length == 1) {
+      relation = relations.first;
+    }
+   MFolder parentFolder =
+    await MFolder.getByID(relation.parentFolderId);
+    await refreshFolder(parentFolder);
+    await lucasState.saveObject(
+        StateProperties.currentFolder, parentFolder);
+    await lucasState.saveObject(
+        StateProperties.selectedFolder, parentFolder);
+
+    await lucasState.saveObject(
+        StateProperties.selectedImage, null);
+    await lucasState.saveObject(
+        StateProperties.selectedVideo, null);
+    await lucasState.saveObject(
+        StateProperties.selectedSound, null);
+    await lucasState.saveObject(
+        StateProperties.selectedEmpty, null);
+
+    if (onRefreshParentWidget != null) {
+      onRefreshParentWidget(null);
+    }*/
+
+
+  }
+
+
 }

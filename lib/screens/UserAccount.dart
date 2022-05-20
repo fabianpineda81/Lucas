@@ -1041,6 +1041,7 @@ class _UserAccountState extends State<UserAccount> {
                         setState(() {
                           status= "Error in reestore";
                         });
+                        print(e);
                       }
 
                       setState(() {

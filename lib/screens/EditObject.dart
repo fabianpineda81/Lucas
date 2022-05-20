@@ -2409,12 +2409,9 @@ class _EditObjectState extends State<EditObject> {
                 }
                 */
 
-                MRelation relation =
-                    await MRelation.getByID(mObject.relationId);
+                MRelation relation = await MRelation.getByID(mObject.relationId);
 
-                List<MRelation> relations =
-                    await MRelation.getAllRelationsOfItemId(
-                        typeOfConcept, mObject.id);
+                List<MRelation> relations = await MRelation.getAllRelationsOfItemId(typeOfConcept, mObject.id);
                 for (int i = 0; i < relations.length; i++) {
                   await MRelation.delete(relations[i]);
                 }

@@ -147,7 +147,7 @@ class HelperWebService {
       "objects": traslations,
     });
     String res =
-    await invokeWebService(json, "backup/v1/uploadMTranslationList");
+        await invokeWebService(json, "backup/v1/uploadMTranslationList");
 
     HelperToast.showToast(res);
   }
@@ -186,7 +186,7 @@ class HelperWebService {
 
   Future<dynamic> listRemoteFolders() async {
     String languageCode =
-    await LocalPreferences.getString('languageCode', 'en');
+        await LocalPreferences.getString('languageCode', 'en');
     String operacion =
         "operations/v1/listFoldersOfAUser?email=$userEmail&language=$languageCode";
     return invokeWebServiceGet(operacion);
@@ -201,7 +201,7 @@ class HelperWebService {
     String linkFinal = "$baseUrl/$operacion";
     // make POST request
     http.Response response =
-    await http.get(Uri.parse(linkFinal), headers: headers);
+        await http.get(Uri.parse(linkFinal), headers: headers);
 
     // check the status code for the result
     int statusCode = response.statusCode;
@@ -230,7 +230,7 @@ class HelperWebService {
     String linkFinal = "$baseUrl/$operacion";
     // make POST request
     http.Response response =
-    await http.get(Uri.parse(linkFinal), headers: headers);
+        await http.get(Uri.parse(linkFinal), headers: headers);
 
     // check the status code for the result
     int statusCode = response.statusCode;
@@ -249,15 +249,45 @@ class HelperWebService {
     throw Exception('Failed to execute operation. Error $statusCode');
   }
 
-  Future<void> replaceFolder(String userEmailNameToRestore, int selectedFolderToRestore, int selectedLocalFolder, Function actualizarEstado) async {
+  Future<void> replaceFolder(
+      String userEmailNameToRestore,
+      int selectedFolderToRestore,
+      int selectedLocalFolder,
+      Function actualizarEstado) async {
+  if(selectedLocalFolder==-1){
+    HelperToast.showToast("can't choose home folder as destination");
+    return;
+  }
+
+    MFolder localFolder = await MFolder.getByID(selectedLocalFolder);
     MFolder remoteFolder = await MFolder.getByID(selectedFolderToRestore);
 
+
     if (remoteFolder != null) {
-      HelperToast.showToast(
-          "the folder ${remoteFolder.id} is already in the mobile");
-      return;
+      if (remoteFolder.id != localFolder.id) {
+
+          HelperToast.showToast(
+              "the folder ${remoteFolder.id} is already in the mobile");
+          return;
+
+      }
     }
-    MFolder localFolder = await MFolder.getByID(selectedLocalFolder);
+
+    String typeOfConcept = await Helper.deleteAnObject(localFolder);
+    List<MRelation> relations =
+        await MRelation.getAllRelationsOfItemId('folder', localFolder.id);
+    MRelation relation;
+    for (int i = 0; i < relations.length; i++) {
+      if (relations[i].gridColumns == 6) {
+        relation = relations[i];
+        break;
+      }
+    }
+
+    for (int i = 0; i < relations.length; i++) {
+      await MRelation.delete(relations[i]);
+    }
+
     if (localFolder == null) {
       if (selectedLocalFolder == -1) {
         localFolder = MFolder();
@@ -269,25 +299,37 @@ class HelperWebService {
 
     actualizarEstado("restoring translations");
 
-    List<Translation> remoteTranslations = await findARemoteTraslations(localFolder, selectedFolderToRestore);
+    List<Translation> remoteTranslations =
+        await findARemoteTraslations(localFolder, selectedFolderToRestore);
     actualizarEstado("restoring Relations");
-    List<MRelation> remoteRelations = await findRemoteRelations(selectedFolderToRestore);
+    List<MRelation> remoteRelations =
+        await findRemoteRelations(selectedFolderToRestore);
 
     for (MRelation r in remoteRelations) {
-      r.gridColumns=6;
+      r.gridColumns = 6;
       MRelation.createWithID(r);
     }
     for (Translation t in remoteTranslations) {
       await Translation.createWithID(t);
     }
 
-    List<MObject> objectsToDelete=await MRelation.getObjectsInFolder(6, selectedLocalFolder);
+    List<MObject> objectsToDelete =
+        await MRelation.getObjectsInFolder(6, selectedLocalFolder);
 
     actualizarEstado("restoring Images");
-    await findRemoteImages(selectedFolderToRestore: selectedFolderToRestore, remoteTranslations: remoteTranslations, localFolder: localFolder, remoteRelations: remoteRelations);
+    await findRemoteImages(
+        selectedFolderToRestore: selectedFolderToRestore,
+        remoteTranslations: remoteTranslations,
+        localFolder: localFolder,
+        remoteRelations: remoteRelations);
 
     actualizarEstado("restoring Folders");
-    await findRemoteFolders(selectedFolderToRestore: selectedFolderToRestore, remoteTranslations: remoteTranslations, localFolder: localFolder, remoteRelations: remoteRelations);
+    await findRemoteFolders(
+        selectedFolderToRestore: selectedFolderToRestore,
+        remoteTranslations: remoteTranslations,
+        localFolder: localFolder,
+        remoteRelations: remoteRelations,
+        relation: relation);
 
     actualizarEstado("restoring complete");
 
@@ -341,7 +383,7 @@ class HelperWebService {
 
     if (mImage.useAsset == 0) {
       HelperFirebase helperFirebase =
-      HelperFirebase(userEmail, userName, HelperFirebase.carpetaImagenes);
+          HelperFirebase(userEmail, userName, HelperFirebase.carpetaImagenes);
       File file = await helperFirebase.DowloadFile(mImage, mImage.fileName);
       if (file != null) {
         mImage.fileName = file.path;
@@ -351,8 +393,11 @@ class HelperWebService {
         mImage.useAsset = 0;
       }
     }
-
-    await MImage.createWithID(mImage);
+    try {
+      await MImage.createWithID(mImage);
+    } catch (e) {
+      print(e);
+    }
 
     // add translation
 
@@ -372,15 +417,13 @@ class HelperWebService {
       backgroundColor:folder.backgroundColor!,
       minLevelToShow: folder.minLevelToShow,
     );*/
-    if(nFolder.useAsset==0) {
+    if (nFolder.useAsset == 0) {
       HelperFirebase helperFirebase =
-      HelperFirebase(userEmail, userName, HelperFirebase.capetaFolders);
+          HelperFirebase(userEmail, userName, HelperFirebase.capetaFolders);
       File file = await helperFirebase.DowloadFile(nFolder, nFolder.fileName);
       if (file != null) {
         nFolder.fileName = file.path;
-        String nombreArchivo = "${file.path
-            .split('/')
-            .last}";
+        String nombreArchivo = "${file.path.split('/').last}";
         nFolder.localFileName = nombreArchivo;
         nFolder.userCreated = 1;
         nFolder.useAsset = 0;
@@ -409,9 +452,9 @@ class HelperWebService {
         "operations/v1/listTranslationOfObjectsOfAFoldersOfAUser?email=$userEmail&folderIdInDevice=$selectedFolderToRestore";
 
     List<dynamic> remoteJsonTranslations =
-    await invokeWebServiceGet(operacionTraslation);
+        await invokeWebServiceGet(operacionTraslation);
     List<Translation> remoteTranslations =
-    HelperBR.jsonToTranslation(remoteJsonTranslations);
+        HelperBR.jsonToTranslation(remoteJsonTranslations);
 
     // update translations
 
@@ -424,15 +467,15 @@ class HelperWebService {
         'operations/v1/listRelationsOfAFoldersOfAUser?email=$userEmail&folderIdInDevice=$selectedFolderToRestore';
     List<dynamic> remoteJsonRelations = await invokeWebServiceGet(operacion);
     List<MRelation> remoteRelations =
-    await HelperBR.jsonToRelations(remoteJsonRelations);
+        await HelperBR.jsonToRelations(remoteJsonRelations);
     return remoteRelations;
   }
 
   Future<List<MImage>> findRemoteImages(
       {int selectedFolderToRestore,
-        List<Translation> remoteTranslations,
-        MFolder localFolder,
-        List<MRelation> remoteRelations}) async {
+      List<Translation> remoteTranslations,
+      MFolder localFolder,
+      List<MRelation> remoteRelations}) async {
     // peticion de imagenes
     String operacionImages =
         "operations/v1/listImagesOfAFoldersOfAUser?email=$userEmail&folderIdInDevice=$selectedFolderToRestore";
@@ -445,22 +488,36 @@ class HelperWebService {
     return remoteImages;
   }
 
-  Future<List<MFolder>> findRemoteFolders({int selectedFolderToRestore,
-    List<Translation> remoteTranslations, MFolder localFolder, List<MRelation> remoteRelations}) async {
+  Future<List<MFolder>> findRemoteFolders(
+      {int selectedFolderToRestore,
+      List<Translation> remoteTranslations,
+      MFolder localFolder,
+      List<MRelation> remoteRelations,
+      MRelation relation}) async {
     String operacionFolderes =
         "operations/v1/listFoldersOfAFoldersOfAUser?email=$userEmail&folderIdInDevice=$selectedFolderToRestore";
 
-    Map<String, dynamic> json = await invokeWebServiceGetFolders(operacionFolderes);
+    Map<String, dynamic> json =
+        await invokeWebServiceGetFolders(operacionFolderes);
     dynamic jsonRoofolder = json["rootFolder"];
     dynamic remoteJsonFolders = json["message"];
 
     List<MFolder> remoteFolders = HelperBR.jsonToFolder(remoteJsonFolders);
     MFolder roofolder = MFolder.jsonToFolder(jsonRoofolder["folder"][0]);
-    MRelation rooRelation = MRelation.jsonToRelation(jsonRoofolder["relation"][0]);
-    rooRelation.gridColumns=6;
-    rooRelation.parentFolderId = localFolder.id;
-    roofolder.parentFolderId = localFolder.id;
+    MRelation rooRelation =
+        MRelation.jsonToRelation(jsonRoofolder["relation"][0]);
+
+    if (relation != null) {
+      rooRelation.visibleIndex = relation.visibleIndex;
+    }
+
+    rooRelation.gridColumns = 6;
+    //rooRelation.parentFolderId = localFolder.id;
+    //roofolder.parentFolderId = localFolder.id;
+    //roofolder.id= localFolder.id;
+
     //MFolder.createWithID(roofolder);
+
     await addRemoteFolder(roofolder);
 
     MRelation.createWithID(rooRelation);
